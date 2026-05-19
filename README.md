@@ -11,6 +11,9 @@ English | [中文](./README_zh.md) | [日本語](./README_ja.md) | [Français](.
 
 DeerFlow (**D**eep **E**xploration and **E**fficient **R**esearch **Flow**) is an open-source **super agent harness** that orchestrates **sub-agents**, **memory**, and **sandboxes** to do almost anything — powered by **extensible skills**.
 
+> [!IMPORTANT]
+> **This fork migrates DeerFlow's memory system to [Hermes](https://github.com/anthropics/anthropic-quickstarts/tree/main/hermes-agent)'s agent-driven memory architecture.** The core philosophy shift: from *automatic LLM extraction* to *agent decides what to remember*. See [Memory System Migration](#memory-system-migration--hermes-alignment) for details.
+
 https://github.com/user-attachments/assets/a8bcadc4-e040-4cf2-8fda-dd768b999c18
 
 > [!NOTE]
@@ -64,6 +67,11 @@ DeerFlow has newly integrated the intelligent search and crawling toolset indepe
       - [Langfuse Tracing](#langfuse-tracing)
       - [Using Both Providers](#using-both-providers)
   - [From Deep Research to Super Agent Harness](#from-deep-research-to-super-agent-harness)
+  - [Memory System Migration — Hermes Alignment](#memory-system-migration--hermes-alignment)
+    - [Before: Auto-Extraction Pipeline](#before-auto-extraction-pipeline)
+    - [After: Agent-Driven Memory](#after-agent-driven-memory)
+    - [Philosophy Comparison](#philosophy-comparison)
+    - [Migration Phases](#migration-phases)
   - [Core Features](#core-features)
     - [Skills \& Tools](#skills--tools)
       - [Claude Code Integration](#claude-code-integration)
@@ -564,6 +572,116 @@ DeerFlow 2.0 is no longer a framework you wire together. It's a super agent harn
 
 Use it as-is. Or tear it apart and make it yours.
 
+## Memory System Migration — Hermes Alignment
+
+This fork's primary contribution: **migrating DeerFlow's memory system to match [Hermes](https://github.com/anthropics/anthropic-quickstarts/tree/main/hermes-agent)'s architecture**, shifting from automatic background extraction to explicit agent-driven memory management.
+
+### Before: Auto-Extraction Pipeline
+
+DeerFlow's original memory system (v2.0) used a **background LLM pipeline** to automatically extract and store memories:
+
+```
+User Message → Agent Response → MemoryMiddleware (filter messages)
+                                     ↓
+                              Debounced Queue (30s batch)
+                                     ↓
+                              Background LLM Call (extract facts)
+                                     ↓
+                              memory.json (structured JSON)
+```
+
+**How it worked:**
+1. `MemoryMiddleware` filtered conversations (user messages + final AI responses)
+2. A debounced queue (30s) batched updates, deduplicating per-thread
+3. A **background LLM call** extracted facts, categorized them (preference/knowledge/context/behavior/goal), assigned confidence scores (0-1)
+4. Facts were stored in `memory.json` with dedup, then top 15 facts + context injected into system prompt via `<memory>` tags
+
+**Problems with this approach:**
+- The agent had **no awareness** of what was remembered — memory was an invisible background process
+- LLM extraction was **lossy and noisy** — the extraction model might miss important context or hallucinate facts
+- Every conversation triggered an **extra LLM call** just for memory extraction (cost + latency)
+- `memory.json` was a **black box** — users and agents couldn't easily inspect or correct what was stored
+- The agent couldn't **intentionally** save or remove memories — it had no tool to do so
+
+### After: Agent-Driven Memory
+
+The new system follows Hermes's philosophy: **the agent explicitly decides what to remember**, using a `memory` tool, with no automatic extraction.
+
+```
+User Message → Agent (with memory snapshot in system prompt)
+                    ↓
+              Agent decides: "Should I remember this?"
+                    ↓ Yes                    ↓ No
+            memory tool (add/replace/remove)    Continue normally
+                    ↓
+            MEMORY.md / USER.md (plain Markdown)
+```
+
+**How it works:**
+1. On each turn, a **frozen snapshot** of `MEMORY.md` and `USER.md` is injected into the system prompt
+2. The agent receives a `memory` tool with three actions: `add` (new entry), `replace` (update), `remove` (delete)
+3. All writes are **agent-initiated** — no background LLM calls, no auto-extraction
+4. Files use plain Markdown with `§`-delimited sections — human-readable and editable
+5. A **nudge middleware** (configurable interval, default 10 turns) spawns a lightweight background review as a safety net, but the agent still decides what to save
+
+**Key design principles (from Hermes):**
+- **Agent sovereignty**: The agent decides what's worth remembering. No invisible background process overrides its judgment.
+- **Frozen snapshot pattern**: The system prompt reads a snapshot taken *before* the current turn. Mid-turn writes update the live files but don't mutate the in-flight snapshot, preserving prefix cache stability.
+- **Transparency**: Memory is stored as readable Markdown files (`MEMORY.md` / `USER.md`), not opaque JSON. Users and developers can inspect, edit, or delete entries directly.
+- **Security scanning**: All writes are validated against injection and exfiltration patterns before persisting.
+- **Per-user isolation**: Each user gets their own memory directory at `.deer-flow/users/{user_id}/memory/`.
+
+### Philosophy Comparison
+
+| Aspect | Before (Auto-Extraction) | After (Agent-Driven / Hermes) |
+|--------|--------------------------|-------------------------------|
+| **Who decides** | Background LLM pipeline | The agent itself, via `memory` tool |
+| **Trigger** | Automatic after every conversation | Agent's explicit decision |
+| **Extra LLM cost** | Yes (background extraction call) | No (no background extraction) |
+| **Storage format** | `memory.json` (structured JSON) | `MEMORY.md` / `USER.md` (Markdown) |
+| **Readability** | Opaque JSON | Human-readable, editable Markdown |
+| **Agent awareness** | None (invisible to agent) | Full (snapshot in system prompt + tool) |
+| **Agent control** | Cannot add/remove/replace | Full `add`/`replace`/`remove` control |
+| **Cache stability** | N/A | Frozen snapshot preserves prefix cache |
+| **Security** | Basic | Injection + exfiltration scanning |
+| **Nudge/safety net** | None | Periodic background review (optional) |
+
+### Migration Phases
+
+The migration was executed in 5 phases, covering the full memory stack:
+
+| Phase | Scope | Key Changes |
+|-------|-------|-------------|
+| **Phase 1** | Core Storage | `MemoryStore` with dual-file (`MEMORY.md`/`USER.md`), `§`-delimited sections, frozen snapshot, atomic writes, file locking |
+| **Phase 2** | Agent Tool | `memory` tool (`add`/`replace`/`remove`), security scanning (injection + exfiltration), `MemoryMiddleware` for snapshot injection |
+| **Phase 3** | Nudge & Integration | `MemoryNudgeMiddleware` for periodic review, system prompt integration, config migration (`config.yaml`) |
+| **Phase 4** | Session Search | SQLite FTS5 full-text search with CJK support, `SearchStorage`/`SearchIndexer`, `session_search` tool |
+| **Phase 5** | External Provider | `MemoryProvider` ABC, `NativeMemoryProvider`, `Mem0Provider` with circuit breaker, `MemoryManager` orchestrator |
+
+**New config structure** (`config.yaml`):
+
+```yaml
+memory:
+  enabled: true
+  injection_enabled: true
+  storage_path: .deer-flow
+  memory_char_limit: 2200
+  user_char_limit: 1375
+  nudge_interval: 10
+
+memory_search:
+  enabled: false
+  db_path: .deer-flow/data/search.db
+  max_results: 3
+  max_content_chars: 100000
+
+memory_provider:
+  enabled: false
+  name: ""           # e.g., "mem0" for external memory provider
+```
+
+**Memory files location**: `backend/.deer-flow/users/{user_id}/memory/MEMORY.md` and `USER.md`
+
 ## Core Features
 
 ### Skills & Tools
@@ -658,11 +776,17 @@ This is the difference between a chatbot with tool access and an agent with an a
 
 ### Long-Term Memory
 
-Most agents forget everything the moment a conversation ends. DeerFlow remembers.
+Most agents forget everything the moment a conversation ends. DeerFlow remembers — **but on its own terms**.
 
-Across sessions, DeerFlow builds a persistent memory of your profile, preferences, and accumulated knowledge. The more you use it, the better it knows you — your writing style, your technical stack, your recurring workflows. Memory is stored locally and stays under your control.
+DeerFlow uses **Hermes-style agent-driven memory**: the agent explicitly decides what to save, replace, or remove using a `memory` tool. There is no automatic extraction pipeline — all memory writes are intentional agent decisions.
 
-Memory updates now skip duplicate fact entries at apply time, so repeated preferences and context do not accumulate endlessly across sessions.
+Two storage targets:
+- **`memory`** (MEMORY.md) — Agent's personal notes: environment facts, project conventions, lessons learned
+- **`user`** (USER.md) — User profile: name, role, preferences, communication style
+
+The agent receives a frozen snapshot of both files in its system prompt at the start of each turn. If it decides something is worth remembering, it calls the `memory` tool. If not, it simply continues. A configurable nudge middleware (default: every 10 user messages) provides a safety net by prompting a lightweight background review.
+
+Memory is stored locally as human-readable Markdown files and stays under your control.
 
 ## Recommended Models
 
