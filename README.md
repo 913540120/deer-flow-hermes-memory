@@ -1,4 +1,4 @@
-# 🦌 DeerFlow - 2.0
+# DeerFlow - Hermes Memory Migration
 
 English | [中文](./README_zh.md) | [日本語](./README_ja.md) | [Français](./README_fr.md) | [Русский](./README_ru.md)
 
@@ -6,53 +6,20 @@ English | [中文](./README_zh.md) | [日本語](./README_ja.md) | [Français](.
 [![Node.js](https://img.shields.io/badge/Node.js-22%2B-339933?logo=node.js&logoColor=white)](./Makefile)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-<a href="https://trendshift.io/repositories/14699" target="_blank"><img src="https://trendshift.io/api/badge/repositories/14699" alt="bytedance%2Fdeer-flow | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-> On February 28th, 2026, DeerFlow claimed the 🏆 #1 spot on GitHub Trending following the launch of version 2. Thanks a million to our incredible community — you made this happen! 💪🔥
-
-DeerFlow (**D**eep **E**xploration and **E**fficient **R**esearch **Flow**) is an open-source **super agent harness** that orchestrates **sub-agents**, **memory**, and **sandboxes** to do almost anything — powered by **extensible skills**.
+DeerFlow (**D**eep **E**xploration and **E**fficient **R**esearch **Flow**) is an open-source community framework that orchestrates sub-agents, memory, and sandboxes to perform complex tasks powered by extensible skills. This fork focuses on migrating DeerFlow's memory system to [Hermes](https://github.com/anthropics/anthropic-quickstarts/tree/main/hermes-agent)'s agent-driven memory architecture.
 
 > [!IMPORTANT]
 > **This fork migrates DeerFlow's memory system to [Hermes](https://github.com/anthropics/anthropic-quickstarts/tree/main/hermes-agent)'s agent-driven memory architecture.** The core philosophy shift: from *automatic LLM extraction* to *agent decides what to remember*. See [Memory System Migration](#memory-system-migration--hermes-alignment) for details.
 
-https://github.com/user-attachments/assets/a8bcadc4-e040-4cf2-8fda-dd768b999c18
-
-> [!NOTE]
-> **DeerFlow 2.0 is a ground-up rewrite.** It shares no code with v1. If you're looking for the original Deep Research framework, it's maintained on the [`1.x` branch](https://github.com/bytedance/deer-flow/tree/main-1.x) — contributions there are still welcome. Active development has moved to 2.0.
-
-## Official Website
-
-[<img width="2880" height="1600" alt="image" src="https://github.com/user-attachments/assets/a598c49f-3b2f-41ea-a052-05e21349188a" />](https://deerflow.tech)
-
-Learn more and see **real demos** on our [**official website**](https://deerflow.tech).
-
-## Coding Plan from ByteDance Volcengine
-
-<img width="4808" height="2400" alt="英文方舟" src="https://github.com/user-attachments/assets/2ecc7b9d-50be-4185-b1f7-5542d222fb2d" />
-
-- We strongly recommend using Doubao-Seed-2.0-Code, DeepSeek v3.2 and Kimi 2.5 to run DeerFlow
-- [Learn more](https://www.byteplus.com/en/activity/codingplan?utm_campaign=deer_flow&utm_content=deer_flow&utm_medium=devrel&utm_source=OWO&utm_term=deer_flow)
-- [中国大陆地区的开发者请点击这里](https://www.volcengine.com/activity/codingplan?utm_campaign=deer_flow&utm_content=deer_flow&utm_medium=devrel&utm_source=OWO&utm_term=deer_flow)
-
-## InfoQuest
-
-DeerFlow has newly integrated the intelligent search and crawling toolset independently developed by BytePlus--[InfoQuest (supports free online experience)](https://docs.byteplus.com/en/docs/InfoQuest/What_is_Info_Quest)
-
-<a href="https://docs.byteplus.com/en/docs/InfoQuest/What_is_Info_Quest" target="_blank">
-  <img
-    src="https://sf16-sg.tiktokcdn.com/obj/eden-sg/hubseh7bsbps/20251208-160108.png"   alt="InfoQuest_banner"
-  />
-</a>
-
----
-
 ## Table of Contents
 
-- [🦌 DeerFlow - 2.0](#-deerflow---20)
-  - [Official Website](#official-website)
-  - [Coding Plan from ByteDance Volcengine](#coding-plan-from-bytedance-volcengine)
-  - [InfoQuest](#infoquest)
+- [DeerFlow - Hermes Memory Migration](#deerflow---hermes-memory-migration)
   - [Table of Contents](#table-of-contents)
-  - [One-Line Agent Setup](#one-line-agent-setup)
+  - [Memory System Migration — Hermes Alignment](#memory-system-migration--hermes-alignment)
+    - [Before: Auto-Extraction Pipeline](#before-auto-extraction-pipeline)
+    - [After: Agent-Driven Memory](#after-agent-driven-memory)
+    - [Philosophy Comparison](#philosophy-comparison)
+    - [Migration Phases](#migration-phases)
   - [Quick Start](#quick-start)
     - [Configuration](#configuration)
     - [Running the Application](#running-the-application)
@@ -66,20 +33,13 @@ DeerFlow has newly integrated the intelligent search and crawling toolset indepe
       - [LangSmith Tracing](#langsmith-tracing)
       - [Langfuse Tracing](#langfuse-tracing)
       - [Using Both Providers](#using-both-providers)
-  - [From Deep Research to Super Agent Harness](#from-deep-research-to-super-agent-harness)
-  - [Memory System Migration — Hermes Alignment](#memory-system-migration--hermes-alignment)
-    - [Before: Auto-Extraction Pipeline](#before-auto-extraction-pipeline)
-    - [After: Agent-Driven Memory](#after-agent-driven-memory)
-    - [Philosophy Comparison](#philosophy-comparison)
-    - [Migration Phases](#migration-phases)
   - [Core Features](#core-features)
-    - [Skills \& Tools](#skills--tools)
+    - [Skills & Tools](#skills--tools)
       - [Claude Code Integration](#claude-code-integration)
     - [Sub-Agents](#sub-agents)
-    - [Sandbox \& File System](#sandbox--file-system)
+    - [Sandbox & File System](#sandbox--file-system)
     - [Context Engineering](#context-engineering)
     - [Long-Term Memory](#long-term-memory)
-  - [Recommended Models](#recommended-models)
   - [Embedded Python Client](#embedded-python-client)
   - [Documentation](#documentation)
   - [⚠️ Security Notice](#️-security-notice)
@@ -88,18 +48,116 @@ DeerFlow has newly integrated the intelligent search and crawling toolset indepe
   - [Contributing](#contributing)
   - [License](#license)
   - [Acknowledgments](#acknowledgments)
-    - [Key Contributors](#key-contributors)
-  - [Star History](#star-history)
 
-## One-Line Agent Setup
+## Memory System Migration — Hermes Alignment
 
-If you use Claude Code, Codex, Cursor, Windsurf, or another coding agent, you can hand it the setup instructions in one sentence:
+This fork's primary contribution: **migrating DeerFlow's memory system to match [Hermes](https://github.com/anthropics/anthropic-quickstarts/tree/main/hermes-agent)'s architecture**, shifting from automatic background extraction to explicit agent-driven memory management.
 
-```text
-Help me clone DeerFlow if needed, then bootstrap it for local development by following https://raw.githubusercontent.com/bytedance/deer-flow/main/Install.md
+### Before: Auto-Extraction Pipeline
+
+DeerFlow's original memory system (v2.0) used a **background LLM pipeline** to automatically extract and store memories:
+
+```
+User Message → Agent Response → MemoryMiddleware (filter messages)
+                                     ↓
+                              Debounced Queue (30s batch)
+                                     ↓
+                              Background LLM Call (extract facts)
+                                     ↓
+                              memory.json (structured JSON)
 ```
 
-That prompt is intended for coding agents. It tells the agent to clone the repo if needed, choose Docker when available, and stop with the exact next command plus any missing config the user still needs to provide.
+**How it worked:**
+1. `MemoryMiddleware` filtered conversations (user messages + final AI responses)
+2. A debounced queue (30s) batched updates, deduplicating per-thread
+3. A **background LLM call** extracted facts, categorized them (preference/knowledge/context/behavior/goal), assigned confidence scores (0-1)
+4. Facts were stored in `memory.json` with dedup, then top 15 facts + context injected into system prompt via `<memory>` tags
+
+**Problems with this approach:**
+- The agent had **no awareness** of what was remembered — memory was an invisible background process
+- LLM extraction was **lossy and noisy** — the extraction model might miss important context or hallucinate facts
+- Every conversation triggered an **extra LLM call** just for memory extraction (cost + latency)
+- `memory.json` was a **black box** — users and agents couldn't easily inspect or correct what was stored
+- The agent couldn't **intentionally** save or remove memories — it had no tool to do so
+
+### After: Agent-Driven Memory
+
+The new system follows Hermes's philosophy: **the agent explicitly decides what to remember**, using a `memory` tool, with no automatic extraction.
+
+```
+User Message → Agent (with memory snapshot in system prompt)
+                    ↓
+              Agent decides: "Should I remember this?"
+                    ↓ Yes                    ↓ No
+            memory tool (add/replace/remove)    Continue normally
+                    ↓
+            MEMORY.md / USER.md (plain Markdown)
+```
+
+**How it works:**
+1. On each turn, a **frozen snapshot** of `MEMORY.md` and `USER.md` is injected into the system prompt
+2. The agent receives a `memory` tool with three actions: `add` (new entry), `replace` (update), `remove` (delete)
+3. All writes are **agent-initiated** — no background LLM calls, no auto-extraction
+4. Files use plain Markdown with `§`-delimited sections — human-readable and editable
+5. A **nudge middleware** (configurable interval, default 10 turns) spawns a lightweight background review as a safety net, but the agent still decides what to save
+
+**Key design principles (from Hermes):**
+- **Agent sovereignty**: The agent decides what's worth remembering. No invisible background process overrides its judgment.
+- **Frozen snapshot pattern**: The system prompt reads a snapshot taken *before* the current turn. Mid-turn writes update the live files but don't mutate the in-flight snapshot, preserving prefix cache stability.
+- **Transparency**: Memory is stored as readable Markdown files (`MEMORY.md` / `USER.md`), not opaque JSON. Users and developers can inspect, edit, or delete entries directly.
+- **Security scanning**: All writes are validated against injection and exfiltration patterns before persisting.
+- **Per-user isolation**: Each user gets their own memory directory at `.deer-flow/users/{user_id}/memory/`.
+
+### Philosophy Comparison
+
+| Aspect | Before (Auto-Extraction) | After (Agent-Driven / Hermes) |
+|--------|--------------------------|-------------------------------|
+| **Who decides** | Background LLM pipeline | The agent itself, via `memory` tool |
+| **Trigger** | Automatic after every conversation | Agent's explicit decision |
+| **Extra LLM cost** | Yes (background extraction call) | No (no background extraction) |
+| **Storage format** | `memory.json` (structured JSON) | `MEMORY.md` / `USER.md` (Markdown) |
+| **Readability** | Opaque JSON | Human-readable, editable Markdown |
+| **Agent awareness** | None (invisible to agent) | Full (snapshot in system prompt + tool) |
+| **Agent control** | Cannot add/remove/replace | Full `add`/`replace`/`remove` control |
+| **Cache stability** | N/A | Frozen snapshot preserves prefix cache |
+| **Security** | Basic | Injection + exfiltration scanning |
+| **Nudge/safety net** | None | Periodic background review (optional) |
+
+### Migration Phases
+
+The migration was executed in 5 phases, covering the full memory stack:
+
+| Phase | Scope | Key Changes |
+|-------|-------|-------------|
+| **Phase 1** | Core Storage | `MemoryStore` with dual-file (`MEMORY.md`/`USER.md`), `§`-delimited sections, frozen snapshot, atomic writes, file locking |
+| **Phase 2** | Agent Tool | `memory` tool (`add`/`replace`/`remove`), security scanning (injection + exfiltration), `MemoryMiddleware` for snapshot injection |
+| **Phase 3** | Nudge & Integration | `MemoryNudgeMiddleware` for periodic review, system prompt integration, config migration (`config.yaml`) |
+| **Phase 4** | Session Search | SQLite FTS5 full-text search with CJK support, `SearchStorage`/`SearchIndexer`, `session_search` tool |
+| **Phase 5** | External Provider | `MemoryProvider` ABC, `NativeMemoryProvider`, `Mem0Provider` with circuit breaker, `MemoryManager` orchestrator |
+
+**New config structure** (`config.yaml`):
+
+```yaml
+memory:
+  enabled: true
+  injection_enabled: true
+  storage_path: .deer-flow
+  memory_char_limit: 2200
+  user_char_limit: 1375
+  nudge_interval: 10
+
+memory_search:
+  enabled: false
+  db_path: .deer-flow/data/search.db
+  max_results: 3
+  max_content_chars: 100000
+
+memory_provider:
+  enabled: false
+  name: ""           # e.g., "mem0" for external memory provider
+```
+
+**Memory files location**: `backend/.deer-flow/users/{user_id}/memory/MEMORY.md` and `USER.md`
 
 ## Quick Start
 
@@ -473,7 +531,7 @@ DINGTALK_CLIENT_SECRET=your_client_secret
 
 1. Create a Slack App at [api.slack.com/apps](https://api.slack.com/apps) → Create New App → From scratch.
 2. Under **OAuth & Permissions**, add Bot Token Scopes: `app_mentions:read`, `chat:write`, `im:history`, `im:read`, `im:write`, `files:write`.
-3. Enable **Socket Mode** → generate an App-Level Token (`xapp-…`) with `connections:write` scope.
+3. Enable **Socket Mode** → generate an App-Level Token (`xapp-...`) with `connections:write` scope.
 4. Under **Event Subscriptions**, subscribe to bot events: `app_mention`, `message.im`.
 5. Set `SLACK_BOT_TOKEN` and `SLACK_APP_TOKEN` in `.env` and enable the channel in `config.yaml`.
 
@@ -559,128 +617,6 @@ If both LangSmith and Langfuse are enabled, DeerFlow attaches both tracing callb
 If a provider is explicitly enabled but missing required credentials, or if its callback fails to initialize, DeerFlow fails fast when tracing is initialized during model creation and the error message names the provider that caused the failure.
 
 For Docker deployments, tracing is disabled by default. Set `LANGSMITH_TRACING=true` and `LANGSMITH_API_KEY` in your `.env` to enable it.
-
-## From Deep Research to Super Agent Harness
-
-DeerFlow started as a Deep Research framework — and the community ran with it. Since launch, developers have pushed it far beyond research: building data pipelines, generating slide decks, spinning up dashboards, automating content workflows. Things we never anticipated.
-
-That told us something important: DeerFlow wasn't just a research tool. It was a **harness** — a runtime that gives agents the infrastructure to actually get work done.
-
-So we rebuilt it from scratch.
-
-DeerFlow 2.0 is no longer a framework you wire together. It's a super agent harness — batteries included, fully extensible. Built on LangGraph and LangChain, it ships with everything an agent needs out of the box: a filesystem, memory, skills, sandbox-aware execution, and the ability to plan and spawn sub-agents for complex, multi-step tasks.
-
-Use it as-is. Or tear it apart and make it yours.
-
-## Memory System Migration — Hermes Alignment
-
-This fork's primary contribution: **migrating DeerFlow's memory system to match [Hermes](https://github.com/anthropics/anthropic-quickstarts/tree/main/hermes-agent)'s architecture**, shifting from automatic background extraction to explicit agent-driven memory management.
-
-### Before: Auto-Extraction Pipeline
-
-DeerFlow's original memory system (v2.0) used a **background LLM pipeline** to automatically extract and store memories:
-
-```
-User Message → Agent Response → MemoryMiddleware (filter messages)
-                                     ↓
-                              Debounced Queue (30s batch)
-                                     ↓
-                              Background LLM Call (extract facts)
-                                     ↓
-                              memory.json (structured JSON)
-```
-
-**How it worked:**
-1. `MemoryMiddleware` filtered conversations (user messages + final AI responses)
-2. A debounced queue (30s) batched updates, deduplicating per-thread
-3. A **background LLM call** extracted facts, categorized them (preference/knowledge/context/behavior/goal), assigned confidence scores (0-1)
-4. Facts were stored in `memory.json` with dedup, then top 15 facts + context injected into system prompt via `<memory>` tags
-
-**Problems with this approach:**
-- The agent had **no awareness** of what was remembered — memory was an invisible background process
-- LLM extraction was **lossy and noisy** — the extraction model might miss important context or hallucinate facts
-- Every conversation triggered an **extra LLM call** just for memory extraction (cost + latency)
-- `memory.json` was a **black box** — users and agents couldn't easily inspect or correct what was stored
-- The agent couldn't **intentionally** save or remove memories — it had no tool to do so
-
-### After: Agent-Driven Memory
-
-The new system follows Hermes's philosophy: **the agent explicitly decides what to remember**, using a `memory` tool, with no automatic extraction.
-
-```
-User Message → Agent (with memory snapshot in system prompt)
-                    ↓
-              Agent decides: "Should I remember this?"
-                    ↓ Yes                    ↓ No
-            memory tool (add/replace/remove)    Continue normally
-                    ↓
-            MEMORY.md / USER.md (plain Markdown)
-```
-
-**How it works:**
-1. On each turn, a **frozen snapshot** of `MEMORY.md` and `USER.md` is injected into the system prompt
-2. The agent receives a `memory` tool with three actions: `add` (new entry), `replace` (update), `remove` (delete)
-3. All writes are **agent-initiated** — no background LLM calls, no auto-extraction
-4. Files use plain Markdown with `§`-delimited sections — human-readable and editable
-5. A **nudge middleware** (configurable interval, default 10 turns) spawns a lightweight background review as a safety net, but the agent still decides what to save
-
-**Key design principles (from Hermes):**
-- **Agent sovereignty**: The agent decides what's worth remembering. No invisible background process overrides its judgment.
-- **Frozen snapshot pattern**: The system prompt reads a snapshot taken *before* the current turn. Mid-turn writes update the live files but don't mutate the in-flight snapshot, preserving prefix cache stability.
-- **Transparency**: Memory is stored as readable Markdown files (`MEMORY.md` / `USER.md`), not opaque JSON. Users and developers can inspect, edit, or delete entries directly.
-- **Security scanning**: All writes are validated against injection and exfiltration patterns before persisting.
-- **Per-user isolation**: Each user gets their own memory directory at `.deer-flow/users/{user_id}/memory/`.
-
-### Philosophy Comparison
-
-| Aspect | Before (Auto-Extraction) | After (Agent-Driven / Hermes) |
-|--------|--------------------------|-------------------------------|
-| **Who decides** | Background LLM pipeline | The agent itself, via `memory` tool |
-| **Trigger** | Automatic after every conversation | Agent's explicit decision |
-| **Extra LLM cost** | Yes (background extraction call) | No (no background extraction) |
-| **Storage format** | `memory.json` (structured JSON) | `MEMORY.md` / `USER.md` (Markdown) |
-| **Readability** | Opaque JSON | Human-readable, editable Markdown |
-| **Agent awareness** | None (invisible to agent) | Full (snapshot in system prompt + tool) |
-| **Agent control** | Cannot add/remove/replace | Full `add`/`replace`/`remove` control |
-| **Cache stability** | N/A | Frozen snapshot preserves prefix cache |
-| **Security** | Basic | Injection + exfiltration scanning |
-| **Nudge/safety net** | None | Periodic background review (optional) |
-
-### Migration Phases
-
-The migration was executed in 5 phases, covering the full memory stack:
-
-| Phase | Scope | Key Changes |
-|-------|-------|-------------|
-| **Phase 1** | Core Storage | `MemoryStore` with dual-file (`MEMORY.md`/`USER.md`), `§`-delimited sections, frozen snapshot, atomic writes, file locking |
-| **Phase 2** | Agent Tool | `memory` tool (`add`/`replace`/`remove`), security scanning (injection + exfiltration), `MemoryMiddleware` for snapshot injection |
-| **Phase 3** | Nudge & Integration | `MemoryNudgeMiddleware` for periodic review, system prompt integration, config migration (`config.yaml`) |
-| **Phase 4** | Session Search | SQLite FTS5 full-text search with CJK support, `SearchStorage`/`SearchIndexer`, `session_search` tool |
-| **Phase 5** | External Provider | `MemoryProvider` ABC, `NativeMemoryProvider`, `Mem0Provider` with circuit breaker, `MemoryManager` orchestrator |
-
-**New config structure** (`config.yaml`):
-
-```yaml
-memory:
-  enabled: true
-  injection_enabled: true
-  storage_path: .deer-flow
-  memory_char_limit: 2200
-  user_char_limit: 1375
-  nudge_interval: 10
-
-memory_search:
-  enabled: false
-  db_path: .deer-flow/data/search.db
-  max_results: 3
-  max_content_chars: 100000
-
-memory_provider:
-  enabled: false
-  name: ""           # e.g., "mem0" for external memory provider
-```
-
-**Memory files location**: `backend/.deer-flow/users/{user_id}/memory/MEMORY.md` and `USER.md`
 
 ## Core Features
 
@@ -788,15 +724,6 @@ The agent receives a frozen snapshot of both files in its system prompt at the s
 
 Memory is stored locally as human-readable Markdown files and stays under your control.
 
-## Recommended Models
-
-DeerFlow is model-agnostic — it works with any LLM that implements the OpenAI-compatible API. That said, it performs best with models that support:
-
-- **Long context windows** (100k+ tokens) for deep research and multi-step tasks
-- **Reasoning capabilities** for adaptive planning and complex decomposition
-- **Multimodal inputs** for image understanding and video comprehension
-- **Strong tool-use** for reliable function calling and structured outputs
-
 ## Embedded Python Client
 
 DeerFlow can be used as an embedded Python library without running the full HTTP services. The `DeerFlowClient` provides direct in-process access to all agent and Gateway capabilities, returning the same response schemas as the HTTP Gateway API. The HTTP Gateway also exposes `DELETE /api/threads/{thread_id}` to remove DeerFlow-managed local thread data after the LangGraph thread itself has been deleted:
@@ -861,24 +788,4 @@ This project is open source and available under the [MIT License](./LICENSE).
 
 ## Acknowledgments
 
-DeerFlow is built upon the incredible work of the open-source community. We are deeply grateful to all the projects and contributors whose efforts have made DeerFlow possible. Truly, we stand on the shoulders of giants.
-
-We would like to extend our sincere appreciation to the following projects for their invaluable contributions:
-
-- **[LangChain](https://github.com/langchain-ai/langchain)**: Their exceptional framework powers our LLM interactions and chains, enabling seamless integration and functionality.
-- **[LangGraph](https://github.com/langchain-ai/langgraph)**: Their innovative approach to multi-agent orchestration has been instrumental in enabling DeerFlow's sophisticated workflows.
-
-These projects exemplify the transformative power of open-source collaboration, and we are proud to build upon their foundations.
-
-### Key Contributors
-
-A heartfelt thank you goes out to the core authors of `DeerFlow`, whose vision, passion, and dedication have brought this project to life:
-
-- **[Daniel Walnut](https://github.com/hetaoBackend/)**
-- **[Henry Li](https://github.com/magiccube/)**
-
-Your unwavering commitment and expertise have been the driving force behind DeerFlow's success. We are honored to have you at the helm of this journey.
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=bytedance/deer-flow&type=Date)](https://star-history.com/#bytedance/deer-flow&Date)
+This project builds on [LangChain](https://github.com/langchain-ai/langchain) for LLM interactions and chains, and [LangGraph](https://github.com/langchain-ai/langgraph) for multi-agent orchestration.

@@ -1,4 +1,4 @@
-# 🦌 DeerFlow - 2.0
+# DeerFlow - Hermes 记忆系统迁移
 
 [English](./README.md) | 中文 | [日本語](./README_ja.md) | [Français](./README_fr.md) | [Русский](./README_ru.md)
 
@@ -6,37 +6,20 @@
 [![Node.js](https://img.shields.io/badge/Node.js-22%2B-339933?logo=node.js&logoColor=white)](./Makefile)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-<a href="https://trendshift.io/repositories/14699" target="_blank"><img src="https://trendshift.io/api/badge/repositories/14699" alt="bytedance%2Fdeer-flow | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-> 2026 年 2 月 28 日，DeerFlow 2 发布后登上 GitHub Trending 第 1 名。非常感谢社区的支持，这是大家一起做到的。
+DeerFlow（**D**eep **E**xploration and **E**fficient **R**esearch **Flow**）是一个开源的 super agent harness，将 sub-agents、memory 和 sandbox 编排在一起，通过可扩展的 skills 驱动完成几乎所有任务。
 
-DeerFlow（**D**eep **E**xploration and **E**fficient **R**esearch **Flow**）是一个开源的 **super agent harness**。它把 **sub-agents**、**memory** 和 **sandbox** 组织在一起，再配合可扩展的 **skills**，让 agent 可以完成几乎任何事情。
-
-https://github.com/user-attachments/assets/a8bcadc4-e040-4cf2-8fda-dd768b999c18
-
-> [!NOTE]
-> **DeerFlow 2.0 是一次彻底重写。** 它和 v1 没有共用代码。如果你要找的是最初的 Deep Research 框架，可以前往 [`1.x` 分支](https://github.com/bytedance/deer-flow/tree/main-1.x)。那里仍然欢迎贡献；当前的主要开发已经转向 2.0。
-
-## 官网
-
-[<img width="2880" height="1600" alt="image" src="https://github.com/user-attachments/assets/a598c49f-3b2f-41ea-a052-05e21349188a" />](https://deerflow.tech)
-
-想了解更多，或者直接看**真实演示**，可以访问[**官网**](https://deerflow.tech)。
-
-## 字节跳动火山引擎方舟 Coding Plan
-
-[<img width="4808" height="2400" alt="codingplan -banner 素材" src="https://github.com/user-attachments/assets/d30dae52-84f2-4021-b32f-6d281252b9ea" />](https://www.volcengine.com/activity/codingplan?utm_campaign=deer_flow&utm_content=deer_flow&utm_medium=devrel&utm_source=OWO&utm_term=deer_flow)
-
-- 我们推荐使用 Doubao-Seed-2.0-Code、DeepSeek v3.2 和 Kimi 2.5 运行 DeerFlow
-- [现在就加入 Coding Plan](https://www.volcengine.com/activity/codingplan?utm_campaign=deer_flow&utm_content=deer_flow&utm_medium=devrel&utm_source=OWO&utm_term=deer_flow)
-- [海外地区的开发者请点击这里](https://www.byteplus.com/en/activity/codingplan?utm_campaign=deer_flow&utm_content=deer_flow&utm_medium=devrel&utm_source=OWO&utm_term=deer_flow)
+> [!IMPORTANT]
+> **本 fork 将 DeerFlow 的记忆系统迁移到了 [Hermes](https://github.com/anthropics/anthropic-quickstarts/tree/main/hermes-agent) 的 agent 驱动记忆架构。** 核心理念变化：从*自动 LLM 提取*变为 *agent 自主决定记住什么*。详见下方[记忆系统迁移](#记忆系统迁移--hermes-对齐)章节。
 
 ## 目录
 
-- [🦌 DeerFlow - 2.0](#-deerflow---20)
-  - [官网](#官网)
-  - [InfoQuest](#infoquest)
+- [DeerFlow - Hermes 记忆系统迁移](#deerflow---hermes-记忆系统迁移)
   - [目录](#目录)
-  - [一句话交给 Coding Agent 安装](#一句话交给-coding-agent-安装)
+  - [记忆系统迁移 — Hermes 对齐](#记忆系统迁移--hermes-对齐)
+    - [迁移前：自动提取管道](#迁移前自动提取管道)
+    - [迁移后：Agent 驱动记忆](#迁移后agent-驱动记忆)
+    - [理念对比](#理念对比)
+    - [迁移阶段](#迁移阶段)
   - [快速开始](#快速开始)
     - [配置](#配置)
     - [运行应用](#运行应用)
@@ -48,7 +31,6 @@ https://github.com/user-attachments/assets/a8bcadc4-e040-4cf2-8fda-dd768b999c18
       - [MCP Server](#mcp-server)
       - [IM 渠道](#im-渠道)
       - [LangSmith 链路追踪](#langsmith-链路追踪)
-  - [从 Deep Research 到 Super Agent Harness](#从-deep-research-到-super-agent-harness)
   - [核心特性](#核心特性)
     - [Skills 与 Tools](#skills-与-tools)
       - [Claude Code 集成](#claude-code-集成)
@@ -56,25 +38,122 @@ https://github.com/user-attachments/assets/a8bcadc4-e040-4cf2-8fda-dd768b999c18
     - [Sandbox 与文件系统](#sandbox-与文件系统)
     - [Context Engineering](#context-engineering)
     - [长期记忆](#长期记忆)
-  - [推荐模型](#推荐模型)
   - [内嵌 Python Client](#内嵌-python-client)
   - [文档](#文档)
-  - [⚠️ 安全使用](#️-安全使用)
+  - [安全使用](#安全使用)
   - [参与贡献](#参与贡献)
   - [许可证](#许可证)
   - [致谢](#致谢)
-    - [核心贡献者](#核心贡献者)
-  - [Star History](#star-history)
 
-## 一句话交给 Coding Agent 安装
+## 记忆系统迁移 — Hermes 对齐
 
-如果你在用 Claude Code、Codex、Cursor、Windsurf 或其他 coding agent，可以直接把下面这句话发给它：
+本 fork 的核心贡献：**将 DeerFlow 的记忆系统迁移为 [Hermes](https://github.com/anthropics/anthropic-quickstarts/tree/main/hermes-agent) 的架构**，从后台自动提取转变为 agent 显式驱动的记忆管理。
 
-```text
-如果还没 clone DeerFlow，就先 clone，然后按照 https://raw.githubusercontent.com/bytedance/deer-flow/main/Install.md 把它的本地开发环境初始化好
+### 迁移前：自动提取管道
+
+DeerFlow 原始记忆系统（v2.0）使用**后台 LLM 管道**自动提取和存储记忆：
+
+```
+用户消息 → Agent 回复 → MemoryMiddleware（过滤消息）
+                                     ↓
+                            去抖队列（30s 批处理）
+                                     ↓
+                            后台 LLM 调用（提取事实）
+                                     ↓
+                            memory.json（结构化 JSON）
 ```
 
-这条提示词是给 coding agent 用的。它会在需要时先 clone 仓库，优先选择 Docker，完成初始化，并在结束时告诉你下一条启动命令，以及还缺哪些配置需要你补充。
+**工作方式：**
+1. `MemoryMiddleware` 过滤对话（用户消息 + 最终 AI 回复）
+2. 去抖队列（30s）批量处理更新，按 thread 去重
+3. **后台 LLM 调用**提取事实，分类（偏好/知识/上下文/行为/目标），赋予置信度评分（0-1）
+4. 事实存入 `memory.json` 并去重，然后取前 15 条事实 + 上下文通过 `<memory>` 标签注入系统提示
+
+**该方案的问题：**
+- Agent **完全不知道**记住了什么 —— 记忆是看不见的后台过程
+- LLM 提取**有损且嘈杂** —— 提取模型可能遗漏重要上下文或虚构事实
+- 每次对话都触发**额外的 LLM 调用**仅用于记忆提取（成本 + 延迟）
+- `memory.json` 是一个**黑箱** —— 用户和 agent 无法轻松检查或纠正存储的内容
+- Agent 无法**主动**保存或删除记忆 —— 没有相关工具
+
+### 迁移后：Agent 驱动记忆
+
+新系统遵循 Hermes 的理念：**agent 显式决定记住什么**，通过 `memory` 工具操作，无自动提取。
+
+```
+用户消息 → Agent（系统提示中包含记忆快照）
+                    ↓
+              Agent 判断："我需要记住这个吗？"
+                    ↓ 是                        ↓ 否
+            memory 工具（添加/替换/删除）       正常继续
+                    ↓
+            MEMORY.md / USER.md（纯 Markdown）
+```
+
+**工作方式：**
+1. 每轮对话开始时，`MEMORY.md` 和 `USER.md` 的**冻结快照**注入系统提示
+2. Agent 获得 `memory` 工具，支持三种操作：`add`（新增）、`replace`（更新）、`remove`（删除）
+3. 所有写入均为 **agent 主动发起** —— 无后台 LLM 调用，无自动提取
+4. 文件使用纯 Markdown，以 `§` 分隔章节 —— 人类可读、可直接编辑
+5. **nudge 中间件**（可配置间隔，默认 10 轮）触发轻量级后台审查作为安全网，但 agent 仍然决定保存什么
+
+**核心设计原则（来自 Hermes）：**
+- **Agent 主权**：Agent 决定什么值得记住。没有不可见的后台进程覆盖它的判断。
+- **冻结快照模式**：系统提示读取在当前轮次*之前*拍摄的快照。轮次内的写入更新活动文件，但不会改变正在使用的快照，保持前缀缓存稳定。
+- **透明性**：记忆以可读的 Markdown 文件存储（`MEMORY.md` / `USER.md`），而非不透明的 JSON。用户和开发者可以直接检查、编辑或删除条目。
+- **安全扫描**：所有写入在持久化前都会通过注入和泄露模式验证。
+- **用户级隔离**：每个用户拥有独立的记忆目录 `.deer-flow/users/{user_id}/memory/`。
+
+### 理念对比
+
+| 维度 | 迁移前（自动提取） | 迁移后（Agent 驱动 / Hermes） |
+|------|-------------------|-------------------------------|
+| **决策者** | 后台 LLM 管道 | Agent 自身，通过 `memory` 工具 |
+| **触发方式** | 每次对话后自动触发 | Agent 的显式决定 |
+| **额外 LLM 开销** | 有（后台提取调用） | 无（无后台提取） |
+| **存储格式** | `memory.json`（结构化 JSON） | `MEMORY.md` / `USER.md`（Markdown） |
+| **可读性** | 不透明的 JSON | 人类可读、可直接编辑的 Markdown |
+| **Agent 感知** | 无（对 agent 不可见） | 完全感知（系统提示快照 + 工具） |
+| **Agent 控制** | 无法添加/删除/替换 | 完整的 `add`/`replace`/`remove` 控制 |
+| **缓存稳定性** | 不适用 | 冻结快照保持前缀缓存稳定 |
+| **安全性** | 基础 | 注入 + 泄露扫描 |
+| **Nudge/安全网** | 无 | 周期性后台审查（可选） |
+
+### 迁移阶段
+
+迁移分为 5 个阶段，覆盖完整的记忆技术栈：
+
+| 阶段 | 范围 | 核心变更 |
+|------|------|----------|
+| **阶段 1** | 核心存储 | `MemoryStore` 双文件存储（`MEMORY.md`/`USER.md`），`§` 分隔章节，冻结快照，原子写入，文件锁 |
+| **阶段 2** | Agent 工具 | `memory` 工具（`add`/`replace`/`remove`），安全扫描（注入 + 泄露），`MemoryMiddleware` 快照注入 |
+| **阶段 3** | Nudge 与集成 | `MemoryNudgeMiddleware` 周期性审查，系统提示集成，配置迁移（`config.yaml`） |
+| **阶段 4** | 会话搜索 | SQLite FTS5 全文搜索（支持 CJK），`SearchStorage`/`SearchIndexer`，`session_search` 工具 |
+| **阶段 5** | 外部 Provider | `MemoryProvider` ABC，`NativeMemoryProvider`，`Mem0Provider`（含熔断器），`MemoryManager` 编排器 |
+
+**新的配置结构**（`config.yaml`）：
+
+```yaml
+memory:
+  enabled: true
+  injection_enabled: true
+  storage_path: .deer-flow
+  memory_char_limit: 2200
+  user_char_limit: 1375
+  nudge_interval: 10
+
+memory_search:
+  enabled: false
+  db_path: .deer-flow/data/search.db
+  max_results: 3
+  max_content_chars: 100000
+
+memory_provider:
+  enabled: false
+  name: ""           # 例如 "mem0" 表示外部记忆 provider
+```
+
+**记忆文件位置**：`backend/.deer-flow/users/{user_id}/memory/MEMORY.md` 和 `USER.md`
 
 ## 快速开始
 
@@ -132,7 +211,6 @@ https://github.com/user-attachments/assets/a8bcadc4-e040-4cf2-8fda-dd768b999c18
    OPENAI_API_KEY=your-openai-api-key
    # 如果配置使用的是 langchain_openai:ChatOpenAI + base_url，OpenRouter 也会读取 OPENAI_API_KEY
    # 其他 provider 的 key 按需补充
-   INFOQUEST_API_KEY=your-infoquest-api-key
    ```
 
 - 方式 B：在 shell 中导出环境变量
@@ -194,7 +272,7 @@ make down   # 停止并移除容器
 
 如果你更希望直接在本地启动各个服务：
 
-前提：先完成上面的“配置”步骤（`make config` 和模型 API key 配置）。`make dev` 需要有效配置文件，默认读取项目根目录下的 `config.yaml`。可以用 `DEER_FLOW_PROJECT_ROOT` 显式指定项目根目录，也可以用 `DEER_FLOW_CONFIG_PATH` 指向某个具体配置文件。运行期状态默认写到项目根目录下的 `.deer-flow`，可用 `DEER_FLOW_HOME` 覆盖；skills 默认读取项目根目录下的 `skills/`，可用 `DEER_FLOW_SKILLS_PATH` 覆盖。
+前提：先完成上面的"配置"步骤（`make config` 和模型 API key 配置）。`make dev` 需要有效配置文件，默认读取项目根目录下的 `config.yaml`。可以用 `DEER_FLOW_PROJECT_ROOT` 显式指定项目根目录，也可以用 `DEER_FLOW_CONFIG_PATH` 指向某个具体配置文件。运行期状态默认写到项目根目录下的 `.deer-flow`，可用 `DEER_FLOW_HOME` 覆盖；skills 默认读取项目根目录下的 `skills/`，可用 `DEER_FLOW_SKILLS_PATH` 覆盖。
 在 Windows 上，请使用 Git Bash 运行本地开发流程。基于 bash 的服务脚本不支持直接在原生 `cmd.exe` 或 PowerShell 中执行，且 WSL 也不保证可用，因为部分脚本依赖 Git for Windows 的 `cygpath` 等工具。
 
 1. **检查依赖环境**：
@@ -405,23 +483,11 @@ LANGSMITH_PROJECT=xxx
 
 Docker 部署时，追踪默认关闭。在 `.env` 中设置 `LANGSMITH_TRACING=true` 和 `LANGSMITH_API_KEY` 即可启用。
 
-## 从 Deep Research 到 Super Agent Harness
-
-DeerFlow 最初是一个 Deep Research 框架，后来社区把它一路推到了更远的地方。上线之后，开发者拿它去做的事情早就不止研究：搭数据流水线、生成演示文稿、快速起 dashboard、自动化内容流程，很多方向一开始连我们自己都没想到。
-
-这让我们意识到一件事：DeerFlow 不只是一个研究工具。它更像一个 **harness**，一个真正让 agents 把事情做完的运行时基础设施。
-
-所以我们把它从头重做了一遍。
-
-DeerFlow 2.0 不再是一个需要你自己拼装的 framework。它是一个开箱即用、同时又足够可扩展的 super agent harness。基于 LangGraph 和 LangChain 构建，默认就带上了 agent 真正会用到的关键能力：文件系统、memory、skills、sandbox 执行环境，以及为复杂多步骤任务做规划、拉起 sub-agents 的能力。
-
-你可以直接拿来用，也可以拆开重组，改成你自己的样子。
-
 ## 核心特性
 
 ### Skills 与 Tools
 
-Skills 是 DeerFlow 能做“几乎任何事”的关键。
+Skills 是 DeerFlow 能做"几乎任何事"的关键。
 
 标准的 Agent Skill 是一种结构化能力模块，通常就是一个 Markdown 文件，里面定义了工作流、最佳实践，以及相关的参考资源。DeerFlow 自带一批内置 skills，覆盖研究、报告生成、演示文稿制作、网页生成、图像和视频生成等场景。真正有意思的地方在于它的扩展性：你可以加自己的 skills，替换内置 skills，或者把多个 skills 组合成复合工作流。
 
@@ -485,11 +551,11 @@ lead agent 可以按需动态拉起 sub-agents。每个 sub-agent 都有自己�
 
 ### Sandbox 与文件系统
 
-DeerFlow 不只是“会说它能做”，它是真的有一台自己的“电脑”。
+DeerFlow 不只是"会说它能做"，它是真的有一台自己的"电脑"。
 
 每个任务都运行在隔离的 Docker 容器里，里面有完整的文件系统，包括 skills、workspace、uploads、outputs。agent 可以读写和编辑文件，可以执行 bash 命令和代码，也可以查看图片。整个过程都在 sandbox 内完成，可审计、会隔离，不会在不同 session 之间互相污染。
 
-这就是“带工具的聊天机器人”和“真正有执行环境的 agent”之间的差别。
+这就是"带工具的聊天机器人"和"真正有执行环境的 agent"之间的差别。
 
 ```text
 # sandbox 容器内的路径
@@ -507,18 +573,17 @@ DeerFlow 不只是“会说它能做”，它是真的有一台自己的“电�
 
 ### 长期记忆
 
-大多数 agents 会在对话结束后把一切都忘掉，DeerFlow 不一样。
+大多数 agents 会在对话结束后把一切都忘掉。DeerFlow 不一样 —— **但记忆方式由 agent 自己决定**。
 
-跨 session 使用时，DeerFlow 会逐步积累关于你的持久 memory，包括你的个人偏好、知识背景，以及长期沉淀下来的工作习惯。你用得越多，它越了解你的写作风格、技术栈和重复出现的工作流。memory 保存在本地，控制权也始终在你手里。
+DeerFlow 采用 **Hermes 式 agent 驱动记忆**：agent 通过 `memory` 工具显式决定保存、替换或删除什么。没有自动提取管道 —— 所有记忆写入都是 agent 的主动决策。
 
-## 推荐模型
+两个存储目标：
+- **`memory`**（MEMORY.md）—— Agent 的个人笔记：环境事实、项目约定、经验教训
+- **`user`**（USER.md）—— 用户画像：姓名、角色、偏好、沟通风格
 
-DeerFlow 对模型没有强绑定，只要实现了 OpenAI 兼容 API 的 LLM，理论上都可以接入。不过在下面这些能力上表现更强的模型，通常会更适合 DeerFlow：
+Agent 在每轮开始时收到两个文件的冻结快照（注入系统提示）。如果它认为某些内容值得记住，就调用 `memory` 工具；否则正常继续。一个可配置的 nudge 中间件（默认：每 10 条用户消息）作为安全网，触发轻量级后台审查。
 
-- **长上下文窗口**（100k+ tokens），适合深度研究和多步骤任务
-- **推理能力**，适合自适应规划和复杂拆解
-- **多模态输入**，适合理解图片和视频
-- **稳定的 tool use 能力**，适合可靠的函数调用和结构化输出
+记忆以人类可读的 Markdown 文件存储在本地，控制权始终在你手中。
 
 ## 内嵌 Python Client
 
@@ -553,7 +618,7 @@ client.upload_files("thread-1", ["./report.pdf"])  # {"success": True, "files": 
 - [架构概览](backend/CLAUDE.md) - 技术架构说明
 - [后端架构](backend/README.md) - 后端架构与 API 参考
 
-## ⚠️ 安全使用
+## 安全使用
 
 ### 不恰当的部署可能导致安全风险
 
@@ -583,22 +648,7 @@ DeerFlow 具备**系统指令执行、资源操作、业务逻辑调用**等关�
 
 ## 致谢
 
-DeerFlow 建立在开源社区大量优秀工作的基础上。所有让 DeerFlow 成为可能的项目和贡献者，我们都心怀感谢。毫不夸张地说，我们是站在巨人的肩膀上继续往前走。
+本项目基于以下开源项目构建：
 
-特别感谢以下项目带来的关键支持：
-
-- **[LangChain](https://github.com/langchain-ai/langchain)**：它们提供的优秀框架支撑了我们的 LLM 交互与 chains，让整体集成和能力编排顺畅可用。
-- **[LangGraph](https://github.com/langchain-ai/langgraph)**：它们在多 agent 编排上的创新方式，是 DeerFlow 复杂工作流得以成立的重要基础。
-
-这些项目体现了开源协作真正的力量，我们也很高兴能继续建立在这些基础之上。
-
-### 核心贡献者
-
-感谢 `DeerFlow` 的核心作者，是他们的判断、投入和持续推进，才让这个项目真正落地：
-
-- **[Daniel Walnut](https://github.com/hetaoBackend/)**
-- **[Henry Li](https://github.com/magiccube/)**
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=bytedance/deer-flow&type=Date)](https://star-history.com/#bytedance/deer-flow&Date)
+- **[LangChain](https://github.com/langchain-ai/langchain)**：LLM 交互与 chain 框架。
+- **[LangGraph](https://github.com/langchain-ai/langgraph)**：多 agent 编排框架。
