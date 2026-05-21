@@ -18,18 +18,29 @@ def memory_tool(
     _store: Any = None,
 ) -> str:
     """Save durable information to persistent memory that survives across sessions.
+    Memory is injected into future turns, so keep it compact and focused on facts
+    that will still matter later.
 
     WHEN TO SAVE (do this proactively, don't wait to be asked):
     - User corrects you or says 'remember this' / 'don't do that again'
-    - User shares a preference, habit, or personal detail
-    - You discover something about the environment (OS, tools, project structure)
-    - You learn a convention, API quirk, or workflow specific to this setup
+    - User shares a preference, habit, or personal detail (name, role, timezone, coding style)
+    - You discover something about the environment (OS, installed tools, project structure)
+    - You learn a convention, API quirk, or workflow specific to this user's setup
+    - You identify a stable fact that will be useful again in future sessions
+
+    PRIORITY: User preferences and corrections > environment facts > procedural knowledge.
+    The most valuable memory prevents the user from having to repeat themselves.
+
+    Do NOT save task progress, session outcomes, completed-work logs, or temporary TODO
+    state to memory.
 
     TWO TARGETS:
-    - 'memory': your personal notes — environment facts, project conventions, lessons learned
-    - 'user': who the user is — name, role, preferences, communication style
+    - 'user': who the user is — name, role, preferences, communication style, pet peeves
+    - 'memory': your notes — environment facts, project conventions, tool quirks, lessons learned
 
     ACTIONS: add (new entry), replace (update existing — old_text identifies it), remove (delete — old_text identifies it).
+
+    SKIP: trivial/obvious info, things easily re-discovered, raw data dumps, and temporary task state.
     """
     if _store is None:
         return json.dumps({"success": False, "error": "Memory is not available."})
@@ -66,7 +77,31 @@ def create_memory_tool(store: MemoryStore):
         content: Annotated[str | None, Field(description="The entry content. Required for 'add' and 'replace'.")] = None,
         old_text: Annotated[str | None, Field(description="Short unique substring identifying the entry to replace or remove.")] = None,
     ) -> str:
-        """Save durable information to persistent memory that survives across sessions."""
+        """Save durable information to persistent memory that survives across sessions.
+        Memory is injected into future turns, so keep it compact and focused on facts
+        that will still matter later.
+
+        WHEN TO SAVE (do this proactively, don't wait to be asked):
+        - User corrects you or says 'remember this' / 'don't do that again'
+        - User shares a preference, habit, or personal detail (name, role, timezone, coding style)
+        - You discover something about the environment (OS, installed tools, project structure)
+        - You learn a convention, API quirk, or workflow specific to this user's setup
+        - You identify a stable fact that will be useful again in future sessions
+
+        PRIORITY: User preferences and corrections > environment facts > procedural knowledge.
+        The most valuable memory prevents the user from having to repeat themselves.
+
+        Do NOT save task progress, session outcomes, completed-work logs, or temporary TODO
+        state to memory.
+
+        TWO TARGETS:
+        - 'user': who the user is — name, role, preferences, communication style, pet peeves
+        - 'memory': your notes — environment facts, project conventions, tool quirks, lessons learned
+
+        ACTIONS: add (new entry), replace (update existing — old_text identifies it), remove (delete — old_text identifies it).
+
+        SKIP: trivial/obvious info, things easily re-discovered, raw data dumps, and temporary task state.
+        """
         return memory_tool.func(action=action, target=target, content=content, old_text=old_text, _store=store)
 
     # Preserve LangChain tool attributes so ToolNode recognises this as a valid tool.
